@@ -52,3 +52,17 @@ gitdump() {
                 python3 /home/david/Offensive-Security-Tools/Miscellaneous/git-dumper/git_dumper.py $1 $2
         fi
 }
+
+genuser() {
+        if [ $# -eq 2 ]
+        then
+                python3 /home/david/Offensive-Security-Tools/AD/username_generator/username_generator.py $1 $2
+        elif [ $# -eq 3 ]
+        then
+                python3 /home/david/Offensive-Security-Tools/AD/username_generator/username_generator.py $1 $2 $3
+        else
+                echo "No arguments supplied"
+                echo "genuser -w /directory/users/file.txt"
+                echo "genuser -w /directory/users/file.txt -u # Produce uppercase permutations."
+        fi
+}
