@@ -23,7 +23,7 @@ This function allows you to:
 To start the web server, you can specify a port and optionally a directory.
 
 ```bash
-pyweb_server <port> [directory]
+webserver <port> [directory]
 ```
 
 - <port>: The port number to start the HTTP server on.
@@ -33,12 +33,12 @@ Examples:
 
 - To serve the default directory on port 8888:
 ```bash
-pyweb_server 8888
+webserver 8888
 ```
 
 - To serve a custom directory on port 9000:
 ```bash
-pyweb_server 9000 /path/to/your/directory
+webserver 9000 /path/to/your/directory
 ```
 
 ##### 2. Interactive Commands
@@ -78,7 +78,6 @@ wget http://<IP>:<port>/mytool.exe
 
 ##### 3. Example Workflow
 ```bash
-Copiar código
 # Start the server on port 8888
 pyweb_server 8888
 
