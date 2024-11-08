@@ -253,6 +253,55 @@ gitdump <REMOTE_URL> <LOCAL_DIRECTORY>
 
 Replace <REMOTE_URL> with the URL of the git repository and <LOCAL_DIRECTORY> with the directory where you want to save it.
 
+### 8. Enumerate shared folders recursively
+
+Alias to enumerate SMB shares on a remote server. This function uses a Python script to list all shares on the specified SMB server and recursively display their contents. Supports anonymous, guest, or authenticated access. Provides options for verbose output and saving results to a file.
+
+```bash
+enumshare() {
+    local script_path="/home/david/Offensive-Security-Tools/CustomScripts/smbEnumerationShares.py"  # Replace with the full path to your script
+
+    if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+        python3 "$script_path" -h
+        return
+    fi
+
+    python3 "$script_path" "$@"
+}
+```
+
+**Usage:**
+
+- Display Help:
+
+```bash
+enunshare --help
+```
+
+- Enumerate Shares (Anonymous Access):
+
+```bash
+enunshare -H 192.168.1.10
+```
+
+- Enumerate Shares with Guest Access:
+
+```bash
+enunshare -H 192.168.1.10 -u guest -p ''
+```
+
+- Enumerate Shares with Authentication:
+
+```bash
+enunshare -H 192.168.1.10 -d MYDOMAIN -u myuser -p mypassword
+```
+
+- Save Output to File:
+
+```bash
+enunshare -H 192.168.1.10 -o output.txt
+```
+
 ## Acknowledgements
 
 This configuration was inspired by various configurations available online. Special thanks to the community for their contributions and shared knowledge.
