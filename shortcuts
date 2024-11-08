@@ -139,3 +139,14 @@ genuser() {
                 echo "genuser -w /directory/users/file.txt -u # Produce uppercase permutations."
         fi
 }
+
+enumshare() {
+    local script_path="/home/david/Offensive-Security-Tools/CustomScripts/smbEnumerationShares.py"  # Replace with the full path to your script
+
+    if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+        python3 "$script_path" -h
+        return
+    fi
+
+    python3 "$script_path" "$@"
+}
